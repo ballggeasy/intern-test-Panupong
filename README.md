@@ -3,6 +3,36 @@
 ระบบจัดการสิทธิ์การเข้าถึงข้อมูลโครงการ (Role-Based Access Control) สำหรับ 2 Role: **Admin** และ **Employee**
 ใช้ Mock Data เท่านั้น (ไม่เชื่อมต่อฐานข้อมูลจริง)
 
+## วิธีรันโปรเจกต์
+
+**ต้องมี:** [Node.js](https://nodejs.org) เวอร์ชัน 18 ขึ้นไป (ทดสอบด้วย Node 22)
+
+```bash
+git clone https://github.com/ballggeasy/intern-test-Panupong.git
+cd intern-test-Panupong/section-3
+npm install
+npm run dev
+```
+
+จากนั้นเปิด http://localhost:5173 ในเบราว์เซอร์ (ถ้าต้องการ build: `npm run build`)
+
+## บัญชีสำหรับเข้าสู่ระบบ (Mock Data)
+
+| Role | Username | Password | หน้าที่เข้าได้ | สิทธิ์ |
+|---|---|---|---|---|
+| **Admin** | `admin` | `Admin@123` | `/admin` | ดู Task ทั้งหมด, สร้าง Project/Task, มอบหมายงาน, แก้สถานะทุก Task |
+| **Employee** | `somchai` | `Somchai@123` | `/employee` | ดูและแก้สถานะเฉพาะ Task ที่ตนเองได้รับมอบหมาย |
+| **Employee** | `somying` | `Somying@123` | `/employee` | เหมือน `somchai` (คนละชุด Task) |
+
+> เป็นข้อมูลสมมติสำหรับทดสอบเท่านั้น ในแอปเก็บเฉพาะ SHA-256 hash ไม่ได้เก็บรหัสผ่านเป็น plain text
+> ข้อมูล Task ที่แก้ไขเก็บใน `sessionStorage` ปิดแท็บแล้วกลับเป็นค่าเริ่มต้น
+
+**ลองทดสอบ RBAC:** Login เป็น `somchai` แล้วพิมพ์ URL `/admin` ตรงๆ จะถูก Redirect กลับ `/employee` พร้อมข้อความ Unauthorized (และกลับกันสำหรับ Admin ที่เข้า `/employee`)
+
+**RBAC ใน Mock API:** Login สำเร็จได้ `token` (Server จำ token → userId) ทุก API รับเฉพาะ token แล้วหา Role จากฐานข้อมูลเอง ไม่เชื่อ `userId`/`Role` ที่ Client ส่ง และ Logout จะยกเลิก token ฝั่ง Server ด้วย
+
+โครงสร้าง `section-3/src`: `api/mockApi.js` (Mock API หน่วงเวลา + ตรวจ RBAC ซ้ำ), `data/mockData.js` (Mock Data), `context/AuthContext.jsx` (Session), `components/ProtectedRoute.jsx` (Route Guard), `pages/` (Login, Admin, Employee)
+
 ## โครงสร้างโปรเจกต์
 
 | โฟลเดอร์ | เนื้อหา |
@@ -128,25 +158,3 @@ users:    [{ id: 1, username: 'admin',   fullName: 'Admin User',     role: 'admi
 projects: [{ id: 1, name: 'Website Redesign', createdBy: 1 }]
 tasks:    [{ id: 1, projectId: 1, title: 'ออกแบบหน้า Home', status: 'To Do', assigned_to: 2 }]
 ```
-
----
-
-## วิธีรัน Web App (section-3)
-
-```bash
-cd section-3
-npm install
-npm run dev     # เปิด http://localhost:5173
-```
-
-บัญชีสำหรับทดสอบ (Mock Data — ในแอปเก็บเฉพาะ SHA-256 hash ไม่ใช่รหัสผ่านจริง):
-
-| Username | Password | Role |
-|---|---|---|
-| `admin` | `Admin@123` | Admin |
-| `somchai` | `Somchai@123` | Employee |
-| `somying` | `Somying@123` | Employee |
-
-**RBAC ใน Mock API:** Login สำเร็จได้ `token` (Server จำ token → userId) ทุก API รับเฉพาะ token แล้วหา Role จากฐานข้อมูลเอง ไม่เชื่อ `userId`/`Role` ที่ Client ส่ง และ Logout จะยกเลิก token ฝั่ง Server ด้วย
-
-โครงสร้าง `section-3/src`: `api/mockApi.js` (Mock API หน่วงเวลา + ตรวจ RBAC ซ้ำ), `data/mockData.js` (Mock Data), `context/AuthContext.jsx` (Session), `components/ProtectedRoute.jsx` (Route Guard), `pages/` (Login, Admin, Employee)
