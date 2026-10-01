@@ -16,20 +16,21 @@
 
 ## ส่วนที่ 2.1 — Tech Stack และเหตุผลที่เลือก
 
-เลือกจากสิ่งที่ flowchart ใน `section-1/flowchart.html` ต้องการ: หน้า Login, Route Guard `/admin` และ `/employee`, Session เก็บ `userId` + `Role`, API จำลองที่หน่วงเวลา, และการกรอง Task ตาม `assigned_to`
+Web Application (ส่วนที่ 3) เลือกเครื่องมือจากสิ่งที่ flowchart ต้องการ: หน้า Login, Route Guard `/admin` และ `/employee`, Session, API จำลองที่หน่วงเวลา และการกรอง Task ตาม `assigned_to`
 
 | เทคโนโลยี | ใช้ทำอะไร | เหตุผลที่เหมาะกับงานนี้ |
 |---|---|---|
-| **JavaScript (ES2022)** | ภาษาหลัก | ตรงกับโค้ด Backend ในส่วนที่ 4 (Node.js) ทำให้ใช้ภาษาเดียวทั้งโปรเจกต์ และมี `Promise`/`async-await` สำหรับจำลอง API |
-| **React 18** | UI | แยกหน้าเป็น Component ได้ชัด (Login, AdminPage, EmployeePage, TaskList) และ State เปลี่ยน → UI อัปเดตทันที ตรงกับโจทย์ "สร้าง Task แล้วแสดงผลทันที" |
-| **Vite** | Build tool / Dev server | เริ่มโปรเจกต์เร็ว, Hot Reload เร็ว, config น้อย เหมาะกับเวลาทดสอบ 3 ชั่วโมง |
-| **React Router v6** | Routing + Route Guard | ทำ `/login`, `/admin`, `/employee` ได้ตรงตัว และเขียน `<ProtectedRoute allowedRole="admin">` ครอบเพื่อตรวจ Role แล้ว `<Navigate>` ไปหน้าที่ถูกต้อง (ตรงกับกล่อง RBAC Guard ใน flowchart) |
-| **Context API** (`AuthContext`, `TaskContext`) | จัดการ State | State ที่ต้องแชร์มีแค่ 2 อย่าง คือ ผู้ใช้ปัจจุบัน (userId, Role) และรายการ Task จึงไม่จำเป็นต้องใช้ Redux ที่ซับซ้อนกว่า |
-| **Mock API** (`Promise` + `setTimeout`) | จำลองเรียก API | ตรงกับขั้นตอน "จำลองเรียก API ตรวจสอบผู้ใช้" ใน flowchart และทำให้เห็น Loading state เหมือนระบบจริง |
-| **sessionStorage** | เก็บ Session | ให้ Refresh หน้าแล้วยังไม่หลุด และ Logout แล้วล้างได้ง่าย (ตรงกับขั้น "ล้างข้อมูล Session/Login") |
-| **CSS ธรรมดา / CSS Modules** | จัดสไตล์ | ไม่ต้องติดตั้งเพิ่ม ลด dependency |
+| **JavaScript (ES2022)** | ภาษาหลัก | ตรงกับ Backend ในส่วนที่ 4 (Node.js) ใช้ภาษาเดียวทั้งโปรเจกต์ และมี `Promise` / `async-await` สำหรับจำลอง API |
+| **React 18** | UI | แยกหน้า (Login, Admin, Employee) เป็น Component ได้ชัด และเมื่อ State เปลี่ยน UI อัปเดตทันที ตรงกับโจทย์ "สร้าง Task แล้วแสดงผลทันที" |
+| **Vite** | Dev server / Build | เริ่มโปรเจกต์เร็ว, Hot Reload เร็ว, config น้อย เหมาะกับเวลา 3 ชั่วโมง |
+| **React Router v6** | Routing + Route Guard | เขียน `<ProtectedRoute allowedRole="admin">` ครอบหน้า แล้ว `<Navigate>` ไปหน้าที่ถูกต้องเมื่อ Role ไม่ตรง (ตรงกับ RBAC Guard ใน flowchart) |
+| **Context API** (`AuthContext`) | จัดการ State ที่แชร์ | State ที่ต้องแชร์ข้ามหน้ามีอย่างเดียวคือ Session (token, userId, Role) จึงไม่ต้องใช้ Redux ส่วนรายการ Task เก็บเป็น `useState` ในแต่ละหน้า |
+| **Mock API** (`Promise` + `setTimeout`) | จำลองเรียก API | ตรงกับขั้น "จำลองเรียก API ตรวจสอบผู้ใช้" และได้ Loading state เหมือนระบบจริง Mock API ตรวจสิทธิ์จาก token ทุกครั้ง ไม่เชื่อ Role ที่ Client ส่งมา |
+| **Web Crypto (SHA-256)** | Hash รหัสผ่านใน Mock Data | Built-in ของเบราว์เซอร์ ไม่ต้องติดตั้ง library เพิ่ม และไม่เก็บรหัสผ่านเป็น plain text |
+| **sessionStorage** | เก็บ Session และ Mock DB | Refresh หน้าแล้วไม่หลุด, ปิดแท็บแล้วหาย, Logout ล้างได้ง่าย (ตรงกับขั้น "ล้างข้อมูล Session/Login") |
+| **CSS ธรรมดา** | จัดสไตล์ | งานมีไม่กี่หน้า ไม่ต้องเพิ่ม dependency |
 
-**ข้อสังเกตด้านความปลอดภัย:** การตรวจสิทธิ์ฝั่ง Frontend (Route Guard, กรอง `assigned_to`) เป็นเพียงการควบคุม UX เท่านั้น ในระบบจริงต้องตรวจซ้ำที่ Backend ทุกครั้ง (ดูตัวอย่างในส่วนที่ 4) และไม่ควรเชื่อ `userRole` ที่ส่งมาจาก Client
+**ข้อสังเกตด้านความปลอดภัย:** Route Guard และการกรอง `assigned_to` ฝั่ง Frontend เป็นแค่การควบคุม UX ในระบบจริงต้องตรวจสิทธิ์ที่ Backend ทุกครั้ง (ดูตัวอย่างในส่วนที่ 4)
 
 ---
 
