@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flowchart Project Access Control</title>
+<style>
+  body { font-family: "Sarabun","Noto Sans Thai",sans-serif; margin: 0; padding: 24px; background: #fff; color: #222; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.sub { margin: 0 0 16px; color: #555; font-size: 14px; }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:13px; margin-bottom:16px; }
+  .legend span { padding:2px 10px; border-radius:4px; border:1px solid #888; }
+  .mermaid { text-align: center; }
+</style>
+</head>
+<body>
+<h1>Flowchart ระบบจัดการสิทธิ์การเข้าถึงข้อมูลโครงการ (Project Access Control)</h1>
+<p class="sub">2 Role: Admin / Employee · ใช้ Mock Data · แสดงแนวคิด RBAC</p>
+<div class="legend">
+  <span style="background:#dbeafe">Admin</span>
+  <span style="background:#dcfce7">Employee</span>
+  <span style="background:#fef3c7">RBAC / การตรวจสอบสิทธิ์</span>
+  <span style="background:#fee2e2">ปฏิเสธ / Error</span>
+</div>
+
+<pre class="mermaid">
+flowchart TD
+  S([เริ่มต้นระบบ]) --> L[แสดงหน้า Login]
+  L --> U[ผู้ใช้กรอก Username]
+  U --> API[จำลองเรียก API ตรวจสอบข้อมูลผู้ใช้<br/>จาก Mock Data]
+  API --> D1{Login สำเร็จ?}
+  D1 -- ไม่สำเร็จ --> F[แสดงข้อความ<br/>เข้าสู่ระบบไม่สำเร็จ]
+  F --> L
+  D1 -- สำเร็จ --> SS[บันทึก Session<br/>userId และ Role]
+  SS --> R{RBAC: ตรวจสอบ Role<br/>เป็น Admin หรือ Employee?}
+
+  R -- Admin --> GA
+  R -- Employee --> GE
+
+  %% ---------- Admin ----------
+  GA{RBAC Guard /admin<br/>Role === Admin?}
+  GA -- ใช่ --> AP[เข้าสู่หน้า Admin /admin]
+  AP --> A1[ดู Task ทั้งหมดในระบบ]
+  A1 --> A2[สร้าง Project ใหม่]
+  A2 --> A3[สร้าง Task ใหม่]
+  A3 --> A4[มอบหมาย Task ให้ Employee คนใดก็ได้<br/>assigned_to = Employee ID]
+  A4 --> A5[แก้ไขสถานะ Task ของทุกคนได้]
+  A5 --> AX[Admin พยายามเข้า /employee]
+  AX --> GE
+
+  %% ---------- Employee ----------
+  GE{RBAC Guard /employee<br/>Role === Employee?}
+  GE -- ใช่ --> EP[เข้าสู่หน้า Employee /employee]
+  EP --> E1[ระบบกรอง Task<br/>assigned_to === userId]
+  E1 --> E2[แสดงเฉพาะ Task ที่ได้รับมอบหมาย]
+  E2 --> E3[Employee เลือก Task เพื่อเปลี่ยนสถานะ]
+  E3 --> D3{Task.assigned_to<br/>=== CurrentUser.id?}
+  D3 -- ใช่ --> E4[เปลี่ยนสถานะ To Do เป็น Done]
+  D3 -- ไม่ใช่ --> E5[ปฏิเสธ: ไม่สามารถเข้าถึงหรือแก้ไข<br/>Task ของ Employee คนอื่น]
+  E5 --> E2
+  E4 --> EX[Employee พยายามเข้า /admin]
+  EX --> GA
+
+  %% ---------- Unauthorized ----------
+  GA -- ไม่ใช่ Admin --> UA[ปฏิเสธการเข้าถึง<br/>Unauthorized]
+  UA --> RE[Redirect ไป /employee]
+  RE --> EP
+  GE -- ไม่ใช่ Employee --> UE[ปฏิเสธการเข้าถึง<br/>Unauthorized]
+  UE --> RA[Redirect ไป /admin]
+  RA --> AP
+
+  %% ---------- Logout ----------
+  A5 --> LO
+  E4 --> LO
+  LO{ผู้ใช้กด Logout?}
+  LO -- ไม่ใช่ ทำงานต่อ --> R
+  LO -- ใช่ --> CL[ล้างข้อมูล Session/Login]
+  CL --> RL[กลับไปหน้า Login]
+  RL --> Q{ใช้งานต่อ?}
+  Q -- ใช่ --> L
+  Q -- ไม่ --> E([จบการทำงาน])
+
+  classDef admin fill:#dbeafe,stroke:#2563eb,color:#111;
+  classDef emp fill:#dcfce7,stroke:#16a34a,color:#111;
+  classDef rbac fill:#fef3c7,stroke:#d97706,color:#111;
+  classDef deny fill:#fee2e2,stroke:#dc2626,color:#111;
+  class AP,A1,A2,A3,A4,A5,AX admin;
+  class EP,E1,E2,E3,E4,EX emp;
+  class R,GA,GE,D3 rbac;
+  class F,UA,UE,E5 deny;
+</pre>
+
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, flowchart: { htmlLabels: true, curve: "basis" }, themeVariables: { fontFamily: "Sarabun, Noto Sans Thai, sans-serif" } });
+</script>
+</body>
+</html>
